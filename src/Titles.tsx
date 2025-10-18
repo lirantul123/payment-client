@@ -1,29 +1,40 @@
 import React from "react";
 
 const Titles: React.FC = () => {
-  const footerStyle: React.CSSProperties = {
+  const footerLeftStyle: React.CSSProperties = {
     position: "fixed",
-    bottom: "30px",
-    width: "100%",
+    top: "50%",
+    left: "10px",
+    transform: "translateY(-50%)",
     textAlign: "center",
-    marginLeft: "-200px",
-    marginTop: "30px",
     pointerEvents: "none",
-  };
-
-  const textStyle: React.CSSProperties = {
-    fontSize: "1rem",
-    fontWeight: 500,
     color: "#888",
-    margin: 0,
     fontFamily: "Poppins, sans-serif",
+    fontWeight: 500,
+    fontSize: "1rem",
+    writingMode: "vertical-rl",
+    letterSpacing: "2px",
   };
 
+  const footerRightStyle: React.CSSProperties = {
+    position: "fixed",
+    top: "50%",
+    right: "10px",
+    transform: "translateY(-50%)",
+    textAlign: "center",
+    pointerEvents: "none",
+    color: "#888",
+    fontFamily: "Poppins, sans-serif",
+    fontWeight: 500,
+    fontSize: "1rem",
+    writingMode: "vertical-lr",
+    letterSpacing: "10px",
+  };
   return (
-    <div style={footerStyle}>
-      <h1 style={textStyle}>We only use mastercard payment because they are the only one who wouldnt dare support the Regime</h1>
-      <h1 style={textStyle}>Created and designed by @anaonimuse</h1>
-    </div>
+    <>
+      <div style={footerLeftStyle}>Created and Designed by @anaonimuse</div>
+      <div style={footerRightStyle}>Free Palestin</div>
+    </>
   );
 };
 

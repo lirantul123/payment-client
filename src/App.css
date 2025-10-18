@@ -6,6 +6,7 @@ body {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
+  margin: 0;
 }
 
 .container {
@@ -117,4 +118,53 @@ button:hover {
   margin-top: 1.3rem;
   color: #00ff7f;
   font-weight: 500;
+}
+
+.invoice-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.invoice-section label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  color: #ccc;
+}
+
+.invoice-section input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #ffcc00;
+}
+
+.card-details {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.card-label {
+  color: #ffcc00;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.card-input-wrapper {
+  background: #1f1f1f;
+  border: 2px solid #ffcc00;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 0 15px rgba(255, 204, 0, 0.2);
+}
+
+.card-details label {
+  color: #ffcc00;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
 }
