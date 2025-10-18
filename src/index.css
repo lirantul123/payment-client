@@ -5,5 +5,14 @@
 }
 
 html, body, #root {
-  height: 94.5%;
+  height: 100%;
+}
+
+body {
+  background: radial-gradient(circle at top, #000000, #1b1b1b);
+  color: #fff;
+  font-family: "Poppins", sans-serif;
+  min-height: z00vh;
+  margin: 0;
+  padding-top: 120px;
 }

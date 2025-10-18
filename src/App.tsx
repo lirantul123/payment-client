@@ -1,125 +1,172 @@
 import React, { useState } from "react";
+import { loadStripe } from "@stripe/stripe-js";
+import {
+  Elements,
+  CardElement,
+  useStripe,
+  useElements,
+} from "@stripe/react-stripe-js";
 import "./App.css";
 
-const App: React.FC = () => {
-  const [cardNumber, setCardNumber] = useState("");
-  const [expiry, setExpiry] = useState("");
-  const [cvc, setCvc] = useState("");
-  const [amount, setAmount] = useState("");
+const stripePromise = loadStripe("pk_test_1234567890"); // Replace with your Stripe publishable key
+
+const PaymentForm: React.FC = () => {
+  const stripe = useStripe();
+  const elements = useElements();
+
+  const [amount, setAmount] = useState<number>(0);
   const [currency, setCurrency] = useState("USD");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [invoiceRequested, setInvoiceRequested] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-
-  // Automatically format card number (####-####-####-####)
-  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, "").slice(0, 16);
-    const formatted = value.replace(/(.{4})/g, "$1-").trim();
-    setCardNumber(formatted.endsWith("-") ? formatted.slice(0, -1) : formatted);
-  };
-
-  // Automatically format expiry date (MM/YY)
-  const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, "").slice(0, 4);
-    if (value.length >= 3) {
-      value = value.slice(0, 2) + "/" + value.slice(2);
-    }
-    setExpiry(value);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!stripe || !elements) return;
+
+    setLoading(true);
     setMessage("Processing your payment...");
 
     try {
-      const res = await fetch("http://localhost:5000/api/payment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cardNumber, expiry, cvc, amount, currency }),
+      const res = await fetch(
+        "http://localhost:5000/api/create-payment-intent",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            amount,
+            currency,
+            name,
+            email,
+            invoiceRequested,
+          }),
+        }
+      );
+
+      const { clientSecret } = await res.json();
+
+      const result = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+          card: elements.getElement(CardElement)!,
+          billing_details: { name, email },
+        },
       });
-      const data = await res.json();
-      setMessage(data.message || "Payment successful!");
-    } catch (error) {
-      console.error(error);
-      setMessage("Error processing payment.");
+
+      if (result.error) {
+        setMessage(result.error.message || "Payment failed");
+      } else if (result.paymentIntent?.status === "succeeded") {
+        setMessage("✅ Payment successful!");
+      }
+    } catch (err) {
+      setMessage("Server error. Please try again later.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="container">
       <div className="card">
-        <h1>💳 Mastercard Secure Payment</h1>
-        <form onSubmit={handleSubmit} autoComplete="on">
-          <label htmlFor="cardNumber">Card Number</label>
+        <h1>💳 Secure Payment Portal</h1>
+        <form onSubmit={handleSubmit}>
+          {/* Payer details */}
+          <label htmlFor="name">Full Name</label>
           <input
-            id="cardNumber"
+            id="name"
             type="text"
-            name="cc-number"
-            inputMode="numeric"
-            autoComplete="cc-number"
-            value={cardNumber}
-            onChange={handleCardNumberChange}
-            placeholder="1234-5678-9012-3456"
+            placeholder="John Doe"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             required
           />
 
-          <div className="row">
-            <div className="col">
-              <label htmlFor="expiry">Expiry Date</label>
-              <input
-                id="expiry"
-                type="text"
-                name="cc-exp"
-                autoComplete="cc-exp"
-                placeholder="MM/YY"
-                value={expiry}
-                onChange={handleExpiryChange}
-                required
-              />
-            </div>
-            <div className="col">
-              <label htmlFor="cvc">CVC</label>
-              <input
-                id="cvc"
-                type="password"
-                name="cc-csc"
-                autoComplete="cc-csc"
-                maxLength={3}
-                placeholder="123"
-                value={cvc}
-                onChange={(e) => setCvc(e.target.value)}
-                required
-              />
-            </div>
-          </div>
+          <label htmlFor="email">Email</label>
+          <input
+            id="email"
+            type="email"
+            placeholder="john@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
 
+          {/* Amount + currency */}
           <label htmlFor="amount">Amount</label>
           <div className="amount-row">
             <input
               id="amount"
               type="number"
-              name="transaction-amount"
+              min="1"
               placeholder="Enter amount"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(e) => setAmount(Number(e.target.value))}
               required
             />
             <select
+              className="currency-select"
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
-              className="currency-select"
             >
               <option value="USD">USD</option>
               <option value="EUR">EUR</option>
-              <option value="ILS">ILS</option>
             </select>
           </div>
 
-          <button type="submit">Pay Now</button>
-        </form>
+          {/* Invoice request */}
+          <div className="invoice-section">
+            <label>
+              <input
+                type="checkbox"
+                checked={invoiceRequested}
+                onChange={(e) => setInvoiceRequested(e.target.checked)}
+              />
+              Request Invoice
+            </label>
 
-        {message && <p className="message">{message}</p>}
+            {invoiceRequested && (
+              <p className="invoice-note">
+                Invoice will be issued to <strong>{name || "your name"}</strong>{" "}
+                and sent to <strong>{email || "your email"}</strong>.
+              </p>
+            )}
+          </div>
+
+          {/* Card element with proper label */}
+          <div className="card-details">
+            <label className="card-label">Card Details</label>
+            <div className="card-input-wrapper">
+              <CardElement
+                options={{
+                  style: {
+                    base: {
+                      fontSize: "16px",
+                      color: "#fff",
+                      "::placeholder": { color: "#888" },
+                    },
+                    invalid: { color: "#ff4d4f" },
+                  },
+                }}
+              />
+            </div>
+          </div>
+
+          <button type="submit" disabled={loading}>
+            {loading ? "Processing..." : "Pay Now"}
+          </button>
+
+          {message && <p className="message">{message}</p>}
+        </form>
       </div>
     </div>
   );
 };
+
+const App: React.FC = () => (
+  <Elements stripe={stripePromise}>
+    <PaymentForm />
+  </Elements>
+);
 
 export default App;
