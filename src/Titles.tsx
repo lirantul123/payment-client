@@ -33,7 +33,6 @@ const Titles: React.FC = () => {
   return (
     <>
       <div style={footerLeftStyle}>Created and Designed by @anaonimuse</div>
-      <div style={footerRightStyle}>Free Palestin</div>
     </>
   );
 };
